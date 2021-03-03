@@ -1,3 +1,5 @@
+/*
+
 package dremio
 
 import (
@@ -8,11 +10,12 @@ import (
 	dapi "github.com/saltxwater/go-dremio-api-client"
 )
 
-func resourceFolder() *schema.Resource {
+func resourceElement() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceFolderCreate,
-		ReadContext:   resourceFolderRead,
-		DeleteContext: resourceFolderDelete,
+		CreateContext: resourceElementCreate,
+		ReadContext:   resourceElementRead,
+		UpdateContext: resourceElementUpdate,
+		DeleteContext: resourceElementDelete,
 		Schema: map[string]*schema.Schema{
 			"path": {
 				Type:     schema.TypeList,
@@ -26,35 +29,33 @@ func resourceFolder() *schema.Resource {
 	}
 }
 
-func resourceFolderCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceElementCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*dapi.Client)
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	folder, err := c.NewFolder(&dapi.NewFolderSpec{
-		Path: interfaceListToStringList(d.Get("path").([]interface{})),
-	})
+	res, err :=
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(folder.Id)
+	d.SetId(res.Id)
 
-	resourceFolderRead(ctx, d, m)
+	resourceElementRead(ctx, d, m)
 
 	return diags
 }
 
-func resourceFolderRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceElementRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*dapi.Client)
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	folderId := d.Id()
+	resId := d.Id()
 
-	folder, err := c.GetFolder(folderId)
+	res, err :=
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -66,19 +67,29 @@ func resourceFolderRead(ctx context.Context, d *schema.ResourceData, m interface
 	return diags
 }
 
-func resourceOrderUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceFolderRead(ctx, d, m)
+func resourceElementUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*dapi.Client)
+
+	resId := d.Id()
+
+	_, err :=
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.Set("last_updated", time.Now().Format(time.RFC850))
+
+	return resourceElementRead(ctx, d, m)
 }
 
-func resourceFolderDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceElementDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*dapi.Client)
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	folderId := d.Id()
+	resId := d.Id()
 
-	err := c.DeleteCatalogItem(folderId)
+	err :=
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -87,3 +98,6 @@ func resourceFolderDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	return diags
 }
+
+
+*/

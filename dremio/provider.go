@@ -36,10 +36,14 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"dremio_folder":          resourceFolder(),
-			"dremio_space":           resourceSpace(),
-			"dremio_source_mssql":    resourceSourceMssql(),
-			"dremio_virtual_dataset": resourceVirtualDataset(),
+			"dremio_folder":           resourceFolder(),
+			"dremio_space":            resourceSpace(),
+			"dremio_source_mssql":     resourceSourceMssql(),
+			"dremio_source_nas":       resourceSourceNas(),
+			"dremio_virtual_dataset":  resourceVirtualDataset(),
+			"dremio_physical_dataset": resourcePhysicalDataset(),
+			"dremio_raw_reflection":   resourceRawReflection(),
+			"dremio_aggr_reflection":  resourceAggregationReflection(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"dremio_summary": dataSourceSummary(),
@@ -66,4 +70,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return nil, diag.FromErr(err)
 	}
 	return client, diags
+}
+
+func interfaceListToStringList(itemsRaw []interface{}) []string {
+	items := make([]string, len(itemsRaw))
+	for i, raw := range itemsRaw {
+		items[i] = raw.(string)
+	}
+	return items
 }
