@@ -35,6 +35,22 @@ func resourceVirtualDataset() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"fields": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -95,6 +111,17 @@ func resourceVirtualDatasetRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	if err := d.Set("sql_context", vds.SqlContext); err != nil {
+		return diag.FromErr(err)
+	}
+
+	fields := make([]map[string]string, len(vds.Fields))
+	for i, field := range vds.Fields {
+		fields[i] = map[string]string{
+			"name": field.Name,
+			"type": field.Type.Name,
+		}
+	}
+	if err := d.Set("fields", fields); err != nil {
 		return diag.FromErr(err)
 	}
 

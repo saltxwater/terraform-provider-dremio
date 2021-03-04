@@ -73,6 +73,22 @@ func resourcePhysicalDataset() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"fields": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"type": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -127,10 +143,10 @@ func resourcePhysicalDatasetRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("type", pds.Type); err != nil {
+	format := pds.Format
+	if err := d.Set("type", format.Type); err != nil {
 		return diag.FromErr(err)
 	}
-	format := pds.Format
 
 	if err := d.Set("field_delimiter", format.FieldDelimiter); err != nil {
 		return diag.FromErr(err)
@@ -173,6 +189,17 @@ func resourcePhysicalDatasetRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if err := d.Set("has_merged_cells", format.HasMergedCells); err != nil {
+		return diag.FromErr(err)
+	}
+
+	fields := make([]map[string]string, len(pds.Fields))
+	for i, field := range pds.Fields {
+		fields[i] = map[string]string{
+			"name": field.Name,
+			"type": field.Type.Name,
+		}
+	}
+	if err := d.Set("fields", fields); err != nil {
 		return diag.FromErr(err)
 	}
 

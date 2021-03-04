@@ -33,17 +33,15 @@ func resourceAggregationReflection() *schema.Resource {
 			"dimension_fields": {
 				Type:     schema.TypeList,
 				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"granularity": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"timestamp_date_dimension_fields": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"measure_fields": {
@@ -96,29 +94,45 @@ func resourceAggregationReflection() *schema.Resource {
 }
 
 func getDimensionFields(d *schema.ResourceData) []dapi.ReflectionFieldWithGranularity {
-	itemsRaw := d.Get("dimension_fields").([]interface{})
-	items := make([]dapi.ReflectionFieldWithGranularity, len(itemsRaw))
-	for i, raw := range itemsRaw {
-		rawMap := raw.(map[string]interface{})
+	dimFields := d.Get("dimension_fields").([]interface{})
+	lenDimFields := len(dimFields)
+	tdDimFields := d.Get("timestamp_date_dimension_fields").([]interface{})
+	items := make([]dapi.ReflectionFieldWithGranularity, lenDimFields+len(tdDimFields))
+	for i, name := range dimFields {
 		items[i] = dapi.ReflectionFieldWithGranularity{
 			ReflectionField: dapi.ReflectionField{
-				Name: rawMap["name"].(string),
+				Name: name.(string),
 			},
-			Granularity: rawMap["granularity"].(string),
+			Granularity: "NORMAL",
+		}
+	}
+	for i, name := range tdDimFields {
+		items[lenDimFields+i] = dapi.ReflectionFieldWithGranularity{
+			ReflectionField: dapi.ReflectionField{
+				Name: name.(string),
+			},
+			Granularity: "DATE",
 		}
 	}
 	return items
 }
 
 func setDimensionFields(d *schema.ResourceData, fields []dapi.ReflectionFieldWithGranularity) error {
-	items := make([]map[string]string, len(fields))
-	for i, raw := range fields {
-		items[i] = map[string]string{
-			"name":        raw.Name,
-			"granularity": raw.Granularity,
+	dimFields := make([]string, 0)
+	tdDimFields := make([]string, 0)
+	for _, field := range fields {
+		if field.Granularity == "NORMAL" {
+			dimFields = append(dimFields, field.Name)
+		}
+		if field.Granularity == "DATE" {
+			tdDimFields = append(tdDimFields, field.Name)
 		}
 	}
-	return d.Set("dimension_fields", items)
+	err := d.Set("dimension_fields", dimFields)
+	if err != nil {
+		return err
+	}
+	return d.Set("timestamp_date_dimension_fields", tdDimFields)
 }
 
 func getMeasureFields(d *schema.ResourceData) []dapi.ReflectionMeasureField {

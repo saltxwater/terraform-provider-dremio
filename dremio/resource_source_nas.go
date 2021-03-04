@@ -20,16 +20,23 @@ func resourceSourceNas() *schema.Resource {
 			Optional: true,
 			Default:  "",
 		},
-		"path": {
+		"mount_path": {
 			Type:     schema.TypeString,
 			Required: true,
+		},
+		"path": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
 		},
 	})
 }
 
 func makeNasSourceConfig(d *schema.ResourceData) interface{} {
 	return map[string]interface{}{
-		"path": d.Get("path").(string),
+		"path": d.Get("mount_path").(string),
 	}
 }
 
@@ -42,8 +49,12 @@ func readNasSource(source *dapi.Source, d *schema.ResourceData) diag.Diagnostics
 			},
 		}
 	}
+	if err := d.Set("path", source.Path); err != nil {
+		return diag.FromErr(err)
+	}
+
 	config := source.Config.(map[string]interface{})
-	if err := d.Set("path", config["path"].(string)); err != nil {
+	if err := d.Set("mount_path", config["path"].(string)); err != nil {
 		return diag.FromErr(err)
 	}
 	return diag.Diagnostics{}

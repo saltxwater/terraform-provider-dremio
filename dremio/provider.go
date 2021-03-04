@@ -46,6 +46,7 @@ func Provider() *schema.Provider {
 			"dremio_aggr_reflection":  resourceAggregationReflection(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"dremio_catalog": dataSourceCatalog(),
 			"dremio_summary": dataSourceSummary(),
 		},
 		ConfigureContextFunc: providerConfigure,

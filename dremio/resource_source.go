@@ -2,6 +2,7 @@ package dremio
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -58,6 +59,7 @@ func makeResourceSourceRead(configReaderFn configReader) schema.ReadContextFunc 
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		log.Printf("MakeResourceSourceRead: %#v", source)
 
 		if err := d.Set("name", source.Name); err != nil {
 			return diag.FromErr(err)
