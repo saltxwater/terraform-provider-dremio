@@ -2,6 +2,7 @@ package dremio
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -79,4 +80,8 @@ func interfaceListToStringList(itemsRaw []interface{}) []string {
 		items[i] = raw.(string)
 	}
 	return items
+}
+
+func getQueryPath(path []string) string {
+	return strings.Join(path, ".")
 }

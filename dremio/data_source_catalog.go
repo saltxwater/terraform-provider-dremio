@@ -40,6 +40,10 @@ func dataSourceCatalog() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"query_path": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -68,6 +72,11 @@ func dataSourceCatalogRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err := d.Set("path", target.Path); err != nil {
 		return diag.FromErr(err)
 	}
+
+	if err := d.Set("query_path", getQueryPath(target.Path)); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("type", target.EntityType); err != nil {
 		return diag.FromErr(err)
 	}

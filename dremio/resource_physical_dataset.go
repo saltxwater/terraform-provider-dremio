@@ -73,6 +73,25 @@ func resourcePhysicalDataset() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"acc_refresh_period_ms": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  10800000,
+			},
+			"acc_grace_period_ms": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  32400000,
+			},
+			"acc_method": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "FULL",
+			},
+			"acc_refresh_field": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"fields": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -88,6 +107,10 @@ func resourcePhysicalDataset() *schema.Resource {
 						},
 					},
 				},
+			},
+			"query_path": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -114,6 +137,12 @@ func resourcePhysicalDatasetCreate(ctx context.Context, d *schema.ResourceData, 
 	pds, err := c.NewPhysicalDataset(original.Id, &dapi.NewPhysicalDatasetSpec{
 		Path:   original.Path,
 		Format: *getFormat(d),
+		AccelerationRefreshPolicy: dapi.DatasetAccelerationRefreshPolicy{
+			RefreshPeriodMs: d.Get("acc_refresh_period_ms").(int),
+			GracePeriodMs:   d.Get("acc_grace_period_ms").(int),
+			Method:          d.Get("acc_method").(string),
+			RefreshField:    d.Get("acc_refresh_field").(string),
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -192,6 +221,21 @@ func resourcePhysicalDatasetRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
+	acc := pds.AccelerationRefreshPolicy
+
+	if err := d.Set("acc_refresh_period_ms", acc.RefreshPeriodMs); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("acc_grace_period_ms", acc.GracePeriodMs); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("acc_method", acc.Method); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("acc_refresh_field", acc.RefreshField); err != nil {
+		return diag.FromErr(err)
+	}
+
 	fields := make([]map[string]string, len(pds.Fields))
 	for i, field := range pds.Fields {
 		fields[i] = map[string]string{
@@ -200,6 +244,9 @@ func resourcePhysicalDatasetRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 	}
 	if err := d.Set("fields", fields); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("query_path", getQueryPath(pds.Path)); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -213,6 +260,12 @@ func resourcePhysicalDatasetUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	_, err := c.UpdatePhysicalDataset(sourceId, &dapi.UpdatePhysicalDatasetSpec{
 		Format: *getFormat(d),
+		AccelerationRefreshPolicy: dapi.DatasetAccelerationRefreshPolicy{
+			RefreshPeriodMs: d.Get("acc_refresh_period_ms").(int),
+			GracePeriodMs:   d.Get("acc_grace_period_ms").(int),
+			Method:          d.Get("acc_method").(string),
+			RefreshField:    d.Get("acc_refresh_field").(string),
+		},
 	})
 	if err != nil {
 		return diag.FromErr(err)

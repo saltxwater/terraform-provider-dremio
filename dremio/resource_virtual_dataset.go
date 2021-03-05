@@ -16,13 +16,15 @@ func resourceVirtualDataset() *schema.Resource {
 		UpdateContext: resourceVirtualDatasetUpdate,
 		DeleteContext: resourceVirtualDatasetDelete,
 		Schema: map[string]*schema.Schema{
-			"path": {
-				Type:     schema.TypeList,
+			"parent_id": {
+				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+			},
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
 			},
 			"sql": {
 				Type:     schema.TypeString,
@@ -34,6 +36,17 @@ func resourceVirtualDataset() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"path": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"query_path": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"fields": {
 				Type:     schema.TypeList,
@@ -61,11 +74,12 @@ func resourceVirtualDatasetCreate(ctx context.Context, d *schema.ResourceData, m
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	inputPath := d.Get("path").([]interface{})
-	path := make([]string, len(inputPath))
-	for i, elem := range inputPath {
-		path[i] = elem.(string)
+	parent, err := c.GetCatalogEntityById(d.Get("parent_id").(string))
+	if err != nil {
+		return diag.FromErr(err)
 	}
+
+	inputPath := append(parent.Path, d.Get("name").(string))
 
 	inputSCtx := d.Get("sql_context").([]interface{})
 	sCtx := make([]string, len(inputSCtx))
@@ -74,7 +88,7 @@ func resourceVirtualDatasetCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	vds, err := c.NewVirtualDataset(&dapi.NewVirtualDatasetSpec{
-		Path:       path,
+		Path:       inputPath,
 		Sql:        d.Get("sql").(string),
 		SqlContext: sCtx,
 	})
@@ -102,10 +116,6 @@ func resourceVirtualDatasetRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("path", vds.Path); err != nil {
-		return diag.FromErr(err)
-	}
-
 	if err := d.Set("sql", vds.Sql); err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,6 +124,13 @@ func resourceVirtualDatasetRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("path", vds.Path); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("query_path", getQueryPath(vds.Path)); err != nil {
+		return diag.FromErr(err)
+	}
 	fields := make([]map[string]string, len(vds.Fields))
 	for i, field := range vds.Fields {
 		fields[i] = map[string]string{
