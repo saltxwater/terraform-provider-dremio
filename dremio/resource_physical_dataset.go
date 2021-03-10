@@ -228,20 +228,8 @@ func resourcePhysicalDatasetRead(ctx context.Context, d *schema.ResourceData, m 
 	if err := d.Set("has_merged_cells", format.HasMergedCells); err != nil {
 		return diag.FromErr(err)
 	}
-
-	acc := pds.AccelerationRefreshPolicy
-
-	if err := d.Set("acc_refresh_period_ms", acc.RefreshPeriodMs); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("acc_grace_period_ms", acc.GracePeriodMs); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("acc_method", acc.Method); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("acc_refresh_field", acc.RefreshField); err != nil {
-		return diag.FromErr(err)
+	if err := setDatasetRefreshPolicy(d, pds.AccelerationRefreshPolicy); err != nil {
+		return err
 	}
 
 	fields := make([]map[string]string, len(pds.Fields))
@@ -316,4 +304,35 @@ func getFormat(d *schema.ResourceData) *dapi.PhysicalDatasetFormat {
 		SheetName:               d.Get("sheet_name").(string),
 		HasMergedCells:          d.Get("has_merged_cells").(bool),
 	}
+}
+
+func setDatasetRefreshPolicy(d *schema.ResourceData, acc *dapi.DatasetAccelerationRefreshPolicy) diag.Diagnostics {
+	if acc == nil {
+		if err := d.Set("acc_refresh_period_ms", 0); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("acc_grace_period_ms", 0); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("acc_method", ""); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("acc_refresh_field", ""); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		if err := d.Set("acc_refresh_period_ms", acc.RefreshPeriodMs); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("acc_grace_period_ms", acc.GracePeriodMs); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("acc_method", acc.Method); err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("acc_refresh_field", acc.RefreshField); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return nil
 }
