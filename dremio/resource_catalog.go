@@ -2,22 +2,23 @@ package dremio
 
 import (
 	"context"
-	"errors"
 	"log"
-
-	dapi "github.com/saltxwater/go-dremio-api-client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	dapi "github.com/saltxwater/go-dremio-api-client"
 )
 
-func dataSourceCatalog() *schema.Resource {
+func resourceCatalog() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceCatalogRead,
+		CreateContext: resourceCatalogCreate,
+		ReadContext:   resourceCatalogRead,
+		DeleteContext: resourceCatalogDelete,
 		Schema: map[string]*schema.Schema{
 			"absolute_path": {
 				Type:     schema.TypeList,
 				Optional: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -25,6 +26,7 @@ func dataSourceCatalog() *schema.Resource {
 			"relative_path": {
 				Type:     schema.TypeList,
 				Optional: true,
+				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -32,6 +34,7 @@ func dataSourceCatalog() *schema.Resource {
 			"parent_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"path": {
 				Type:     schema.TypeList,
@@ -52,13 +55,13 @@ func dataSourceCatalog() *schema.Resource {
 	}
 }
 
-func dataSourceCatalogRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCatalogCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*dapi.Client)
 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	absPath, err := catalogGetAbsolutePath(client, d)
+	absPath, err := getAbsolutePath(client, d.Get("parent_id").(string), d.Get("relative_path").([]interface{}))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -68,6 +71,26 @@ func dataSourceCatalogRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	log.Printf("Target is %v", target)
+
+	d.SetId(target.Id)
+
+	resourceCatalogRead(ctx, d, m)
+
+	return diags
+}
+
+func resourceCatalogRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*dapi.Client)
+
+	// Warning or errors can be collected in a slice type
+	var diags diag.Diagnostics
+
+	resId := d.Id()
+
+	target, err := c.GetCatalogEntityById(resId)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	if err := d.Set("path", target.Path); err != nil {
 		return diag.FromErr(err)
@@ -80,21 +103,11 @@ func dataSourceCatalogRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err := d.Set("type", target.EntityType); err != nil {
 		return diag.FromErr(err)
 	}
-
-	// always run
-	d.SetId(target.Id)
-
 	return diags
 }
 
-func catalogGetAbsolutePath(client *dapi.Client, d *schema.ResourceData) ([]string, error) {
-	absPath := interfaceListToStringList(d.Get("absolute_path").([]interface{}))
-	if len(absPath) > 0 {
-		return absPath, nil
-	}
-	parentId := d.Get("parent_id").(string)
-	if parentId != "" {
-		return getAbsolutePath(client, parentId, d.Get("relative_path").([]interface{}))
-	}
-	return nil, errors.New("Expected absolute_path or parent_id to be set")
+func resourceCatalogDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+	d.SetId("")
+	return diags
 }

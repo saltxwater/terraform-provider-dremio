@@ -17,7 +17,12 @@ func resourcePhysicalDataset() *schema.Resource {
 		UpdateContext: resourcePhysicalDatasetUpdate,
 		DeleteContext: resourcePhysicalDatasetDelete,
 		Schema: map[string]*schema.Schema{
-			"path": {
+			"parent_id": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"relative_path": {
 				Type:     schema.TypeList,
 				Required: true,
 				ForceNew: true,
@@ -92,6 +97,13 @@ func resourcePhysicalDataset() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"path": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"fields": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -122,14 +134,10 @@ func resourcePhysicalDatasetCreate(ctx context.Context, d *schema.ResourceData, 
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	inputPath := d.Get("path").([]interface{})
-	path := make([]string, len(inputPath))
-	for i, elem := range inputPath {
-		path[i] = elem.(string)
-	}
+	absolutePath, err := getAbsolutePath(c, d.Get("parent_id").(string), d.Get("relative_path").([]interface{}))
 
-	log.Printf("Fetching target by path: %v", path)
-	original, err := c.GetCatalogEntityByPath(path)
+	log.Printf("Fetching target by path: %v", absolutePath)
+	original, err := c.GetCatalogEntityByPath(absolutePath)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,7 +145,7 @@ func resourcePhysicalDatasetCreate(ctx context.Context, d *schema.ResourceData, 
 	pds, err := c.NewPhysicalDataset(original.Id, &dapi.NewPhysicalDatasetSpec{
 		Path:   original.Path,
 		Format: *getFormat(d),
-		AccelerationRefreshPolicy: dapi.DatasetAccelerationRefreshPolicy{
+		AccelerationRefreshPolicy: &dapi.DatasetAccelerationRefreshPolicy{
 			RefreshPeriodMs: d.Get("acc_refresh_period_ms").(int),
 			GracePeriodMs:   d.Get("acc_grace_period_ms").(int),
 			Method:          d.Get("acc_method").(string),
@@ -260,7 +268,7 @@ func resourcePhysicalDatasetUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	_, err := c.UpdatePhysicalDataset(sourceId, &dapi.UpdatePhysicalDatasetSpec{
 		Format: *getFormat(d),
-		AccelerationRefreshPolicy: dapi.DatasetAccelerationRefreshPolicy{
+		AccelerationRefreshPolicy: &dapi.DatasetAccelerationRefreshPolicy{
 			RefreshPeriodMs: d.Get("acc_refresh_period_ms").(int),
 			GracePeriodMs:   d.Get("acc_grace_period_ms").(int),
 			Method:          d.Get("acc_method").(string),

@@ -2,7 +2,6 @@ package dremio
 
 import (
 	"context"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,10 +38,10 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"dremio_folder":           resourceFolder(),
 			"dremio_space":            resourceSpace(),
-			"dremio_source_mssql":     resourceSourceMssql(),
-			"dremio_source_nas":       resourceSourceNas(),
+			"dremio_source":           resourceSource(),
 			"dremio_virtual_dataset":  resourceVirtualDataset(),
 			"dremio_physical_dataset": resourcePhysicalDataset(),
+			"dremio_catalog":          resourceCatalog(),
 			"dremio_raw_reflection":   resourceRawReflection(),
 			"dremio_aggr_reflection":  resourceAggregationReflection(),
 		},
@@ -72,16 +71,4 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		return nil, diag.FromErr(err)
 	}
 	return client, diags
-}
-
-func interfaceListToStringList(itemsRaw []interface{}) []string {
-	items := make([]string, len(itemsRaw))
-	for i, raw := range itemsRaw {
-		items[i] = raw.(string)
-	}
-	return items
-}
-
-func getQueryPath(path []string) string {
-	return strings.Join(path, ".")
 }
