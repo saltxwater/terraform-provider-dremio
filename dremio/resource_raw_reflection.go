@@ -21,21 +21,22 @@ func resourceRawReflection() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"enabled": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
-			},
 			"display_fields": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "Raw",
+			},
+			"enabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 			"distribution_fields": {
 				Type:     schema.TypeList,

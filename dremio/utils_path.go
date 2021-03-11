@@ -17,14 +17,6 @@ func getAbsolutePath(client *dapi.Client, parentId string, relativePath []interf
 	return append(parent.Path, relPath...), nil
 }
 
-func interfaceListToStringList(itemsRaw []interface{}) []string {
-	items := make([]string, len(itemsRaw))
-	for i, raw := range itemsRaw {
-		items[i] = raw.(string)
-	}
-	return items
-}
-
 func getQueryPath(path []string) string {
 	qp := make([]string, len(path))
 	for i, p := range path {

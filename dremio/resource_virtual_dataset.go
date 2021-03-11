@@ -15,7 +15,7 @@ func resourceVirtualDataset() *schema.Resource {
 		ReadContext:   resourceVirtualDatasetRead,
 		UpdateContext: resourceVirtualDatasetUpdate,
 		DeleteContext: resourceVirtualDatasetDelete,
-		Schema: map[string]*schema.Schema{
+		Schema: makeDatasetSchema(map[string]*schema.Schema{
 			"parent_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -37,34 +37,8 @@ func resourceVirtualDataset() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"path": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"query_path": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"fields": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
 		},
+		),
 	}
 }
 
@@ -124,21 +98,7 @@ func resourceVirtualDatasetRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("path", vds.Path); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := d.Set("query_path", getQueryPath(vds.Path)); err != nil {
-		return diag.FromErr(err)
-	}
-	fields := make([]map[string]string, len(vds.Fields))
-	for i, field := range vds.Fields {
-		fields[i] = map[string]string{
-			"name": field.Name,
-			"type": field.Type.Name,
-		}
-	}
-	if err := d.Set("fields", fields); err != nil {
+	if err := readDatasetCommon(d, &vds.Dataset); err != nil {
 		return diag.FromErr(err)
 	}
 

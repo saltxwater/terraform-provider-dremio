@@ -3,7 +3,7 @@ HOSTNAME=github.com
 NAMESPACE=saltxwater
 NAME=dremio
 BINARY=terraform-provider-${NAME}.exe
-VERSION=0.1
+VERSION=0.1.0
 OS_ARCH=windows_amd64
 
 default: install
