@@ -74,6 +74,16 @@ func resourceSource() *schema.Resource {
 				Optional: true,
 				Default:  32400000,
 			},
+			"acc_never_expire": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+			"acc_never_refresh": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"config": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -108,6 +118,10 @@ func resourceSource() *schema.Resource {
 							Optional: true,
 						},
 						"show_only_connection_database": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"enable_external_query": {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
@@ -157,6 +171,8 @@ func resourceSourceCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		MetadataPolicy:              getSourceMetadataPolicy(d),
 		AccelerationRefreshPeriodMs: d.Get("acc_refresh_period_ms").(int),
 		AccelerationGracePeriodMs:   d.Get("acc_grace_period_ms").(int),
+		AccelerationNeverExpire:     d.Get("acc_never_expire").(bool),
+		AccelerationNeverRefresh:    d.Get("acc_never_refresh").(bool),
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -221,38 +237,12 @@ func resourceSourceRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("acc_grace_period_ms", source.AccelerationGracePeriodMs); err != nil {
 		return diag.FromErr(err)
 	}
-	/*
-		if err := d.Set("mount_path", config["path"].(string)); err != nil {
-			return diag.FromErr(err)
-		}
-
-		if err := d.Set("username", config["username"].(string)); err != nil {
-			return diag.FromErr(err)
-		}
-
-		if err := d.Set("hostname", config["hostname"].(string)); err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("port", config["port"].(string)); err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("authentication_type", config["authenticationType"].(string)); err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("fetch_size", int(config["fetchSize"].(float64))); err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("database", config["database"].(string)); err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("show_only_connection_database", config["showOnlyConnectionDatabase"].(bool)); err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("path", source.Path); err != nil {
-			return diag.FromErr(err)
-		}
-		// Ignore password as Dremio returns this as $DREMIO_EXISTING_VALUE$
-	*/
+	if err := d.Set("acc_never_expire", source.AccelerationNeverExpire); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("acc_never_refresh", source.AccelerationNeverRefresh); err != nil {
+		return diag.FromErr(err)
+	}
 	return diag.Diagnostics{}
 }
 
@@ -271,6 +261,8 @@ func resourceSourceUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		MetadataPolicy:              getSourceMetadataPolicy(d),
 		AccelerationRefreshPeriodMs: d.Get("acc_refresh_period_ms").(int),
 		AccelerationGracePeriodMs:   d.Get("acc_grace_period_ms").(int),
+		AccelerationNeverExpire:     d.Get("acc_never_expire").(bool),
+		AccelerationNeverRefresh:    d.Get("acc_never_refresh").(bool),
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -315,6 +307,7 @@ func getSourceConfig(d *schema.ResourceData) (interface{}, error) {
 			"fetchSize":                  d.Get("config.0.fetch_size").(int),
 			"database":                   d.Get("config.0.database").(string),
 			"showOnlyConnectionDatabase": d.Get("config.0.show_only_connection_database").(bool),
+			"enableExternalQuery":        d.Get("config.0.enable_external_query").(bool),
 		}, nil
 	}
 	return nil, errors.New("Unexpected type")
@@ -341,6 +334,7 @@ func readSourceConfig(d *schema.ResourceData, sType string, config map[string]in
 				"fetch_size":                    config["fetchSize"].(float64),
 				"database":                      config["database"].(string),
 				"show_only_connection_database": config["showOnlyConnectionDatabase"].(bool),
+				"enable_external_query":         config["enableExternalQuery"].(bool),
 			},
 		})
 		if err != nil {

@@ -4,5 +4,5 @@ go 1.16
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.4
-	github.com/saltxwater/go-dremio-api-client v0.1.4
+	github.com/saltxwater/go-dremio-api-client v0.1.5
 )

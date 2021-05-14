@@ -44,6 +44,8 @@ func Provider() *schema.Provider {
 			"dremio_physical_dataset": resourcePhysicalDataset(),
 			"dremio_raw_reflection":   resourceRawReflection(),
 			"dremio_aggr_reflection":  resourceAggregationReflection(),
+			"dremio_entity_tags":      resourceEntityTags(),
+			"dremio_entity_wiki":      resourceEntityWiki(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"dremio_summary": dataSourceSummary(),

@@ -44,23 +44,11 @@ func resourceAggregationReflection() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"measure_fields": {
+			"measure_fields_sum": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"measure": {
-							Type:     schema.TypeSet,
-							Required: true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-					},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"distribution_fields": {
@@ -136,29 +124,29 @@ func setDimensionFields(d *schema.ResourceData, fields []dapi.ReflectionFieldWit
 }
 
 func getMeasureFields(d *schema.ResourceData) []dapi.ReflectionMeasureField {
-	itemsRaw := d.Get("measure_fields").([]interface{})
+	itemsRaw := d.Get("measure_fields_sum").([]interface{})
 	items := make([]dapi.ReflectionMeasureField, len(itemsRaw))
 	for i, raw := range itemsRaw {
-		rawMap := raw.(map[string]interface{})
 		items[i] = dapi.ReflectionMeasureField{
 			ReflectionField: dapi.ReflectionField{
-				Name: rawMap["name"].(string),
+				Name: raw.(string),
 			},
-			MeasureTypeList: interfaceListToStringList(rawMap["measure"].(*schema.Set).List()),
+			MeasureTypeList: []string{"SUM"},
 		}
 	}
 	return items
 }
 
 func setMeasureFields(d *schema.ResourceData, fields []dapi.ReflectionMeasureField) error {
-	items := make([]map[string]interface{}, len(fields))
-	for i, raw := range fields {
-		items[i] = map[string]interface{}{
-			"name":    raw.Name,
-			"measure": raw.MeasureTypeList,
+	items := make([]string, 0)
+	for _, raw := range fields {
+		for _, m := range raw.MeasureTypeList {
+			if m == "SUM" {
+				items = append(items, raw.Name)
+			}
 		}
 	}
-	return d.Set("measure_fields", items)
+	return d.Set("measure_fields_sum", items)
 }
 
 func resourceAggregationReflectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

@@ -53,8 +53,9 @@ func makePhysicalDatasetSchema(s map[string]*schema.Schema) map[string]*schema.S
 
 func makeDatasetSchema(s map[string]*schema.Schema) map[string]*schema.Schema {
 	s["fields"] = &schema.Schema{
-		Type:     schema.TypeList,
-		Computed: true,
+		Type:      schema.TypeList,
+		Computed:  true,
+		Sensitive: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"name": {

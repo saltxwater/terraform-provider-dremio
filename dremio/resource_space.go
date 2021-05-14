@@ -19,6 +19,13 @@ func resourceSpace() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"path": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -57,6 +64,9 @@ func resourceSpaceRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if err := d.Set("name", space.Name); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("path", space.Path); err != nil {
 		return diag.FromErr(err)
 	}
 
