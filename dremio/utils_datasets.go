@@ -48,6 +48,14 @@ func makePhysicalDatasetSchema(s map[string]*schema.Schema) map[string]*schema.S
 		Type:     schema.TypeString,
 		Optional: true,
 	}
+	s["acc_never_expire"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+	}
+	s["acc_never_refresh"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+	}
 	return makeDatasetSchema(s)
 }
 
@@ -98,6 +106,12 @@ func readPhysicalDatasetRefreshPolicy(d *schema.ResourceData, pds *dapi.Physical
 		if err := d.Set("acc_refresh_field", ""); err != nil {
 			return err
 		}
+		if err := d.Set("acc_never_expire", false); err != nil {
+			return err
+		}
+		if err := d.Set("acc_never_refresh", false); err != nil {
+			return err
+		}
 	} else {
 		if err := d.Set("acc_refresh_period_ms", acc.RefreshPeriodMs); err != nil {
 			return err
@@ -109,6 +123,12 @@ func readPhysicalDatasetRefreshPolicy(d *schema.ResourceData, pds *dapi.Physical
 			return err
 		}
 		if err := d.Set("acc_refresh_field", acc.RefreshField); err != nil {
+			return err
+		}
+		if err := d.Set("acc_never_expire", acc.NeverExpire); err != nil {
+			return err
+		}
+		if err := d.Set("acc_never_refresh", acc.NeverRefresh); err != nil {
 			return err
 		}
 	}
@@ -150,6 +170,8 @@ func getDatasetAccelerationRefreshPolicy(d *schema.ResourceData) *dapi.DatasetAc
 		GracePeriodMs:   d.Get("acc_grace_period_ms").(int),
 		Method:          d.Get("acc_method").(string),
 		RefreshField:    d.Get("acc_refresh_field").(string),
+		NeverExpire:     d.Get("acc_never_expire").(bool),
+		NeverRefresh:    d.Get("acc_never_refresh").(bool),
 	}
 }
 

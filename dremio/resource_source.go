@@ -121,10 +121,6 @@ func resourceSource() *schema.Resource {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
-						"enable_external_query": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
 					},
 				},
 			},
@@ -307,7 +303,6 @@ func getSourceConfig(d *schema.ResourceData) (interface{}, error) {
 			"fetchSize":                  d.Get("config.0.fetch_size").(int),
 			"database":                   d.Get("config.0.database").(string),
 			"showOnlyConnectionDatabase": d.Get("config.0.show_only_connection_database").(bool),
-			"enableExternalQuery":        d.Get("config.0.enable_external_query").(bool),
 		}, nil
 	}
 	return nil, errors.New("Unexpected type")
@@ -334,7 +329,6 @@ func readSourceConfig(d *schema.ResourceData, sType string, config map[string]in
 				"fetch_size":                    config["fetchSize"].(float64),
 				"database":                      config["database"].(string),
 				"show_only_connection_database": config["showOnlyConnectionDatabase"].(bool),
-				"enable_external_query":         config["enableExternalQuery"].(bool),
 			},
 		})
 		if err != nil {
